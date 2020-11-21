@@ -44,6 +44,12 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
         cube_code=input('Insert Level 3 cube code for the selected area: ')
     else:
         print('Invalid Level')
+
+    # Dir = os.path.join(Dir, 'WAPOR.v%s_mm-dekad-1_%s' % (version, cube_code))
+    Dir = os.path.join(Dir, cube_code)
+    if not os.path.exists(Dir):
+        os.makedirs(Dir)
+
     try:
         cube_info=WaPOR.API.getCubeInfo(cube_code)
         multiplier=cube_info['measure']['multiplier']
@@ -53,6 +59,7 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
     time_range='{0},{1}'.format(Startdate,Enddate)
     try:
         df_avail=WaPOR.API.getAvailData(cube_code,time_range=time_range)
+        df_avail.to_excel(os.path.join(Dir, 'df_avail_' + cube_code + '.xlsx'))
     except:
         print('ERROR: cannot get list of available data')
         return None
@@ -60,41 +67,46 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
         import WaPOR.WaitbarConsole as WaitbarConsole
         total_amount = len(df_avail)
         amount = 0
-        WaitbarConsole.printWaitBar(amount, total_amount, prefix = 'Progress:', suffix = 'Complete', length = 50)
+        WaitbarConsole.printWaitBar(amount, total_amount, prefix = 'Progress:', suffix = ' ', length = 50)
 
-    Dir=os.path.join(Dir,'WAPOR.v%s_mm-dekad-1_%s' %(version,cube_code))
-    if not os.path.exists(Dir):
-        os.makedirs(Dir)
+
         
-    for index,row in df_avail.iterrows():  
-        ### get download url
-        download_url=WaPOR.API.getCropRasterURL(bbox,cube_code,
-                                               row['time_code'],
-                                               row['raster_id'],
-                                               WaPOR.API.Token,
-                                               print_job=False)      
-              
-        filename='{0}.tif'.format(row['raster_id'])
-        outfilename=os.path.join(Dir,filename)       
-        download_file=os.path.join(Dir,'raw_{0}.tif'.format(row['raster_id']))
-        ### Download raster file
-        resp=requests.get(download_url)         
-        open(download_file,'wb').write(resp.content) 
-        
-        ### number of days
-        timestr=row['time_code']
-        startdate=datetime.datetime.strptime(timestr[1:11],'%Y-%m-%d')
-        enddate=datetime.datetime.strptime(timestr[12:22],'%Y-%m-%d')
-        ndays=(enddate.timestamp()-startdate.timestamp())/86400
-        
-        ### correct raster with multiplier and number of days in dekad
-        driver, NDV, xsize, ysize, GeoT, Projection= gis.GetGeoInfo(download_file)
-        Array = gis.OpenAsArray(download_file,nan_values=True)
-        Array=np.where(Array<0,0,Array) #mask out flagged value -9998
-        CorrectedArray=Array*multiplier*ndays
-        gis.CreateGeoTiff(outfilename,CorrectedArray,
-                          driver, NDV, xsize, ysize, GeoT, Projection)
-        os.remove(download_file)        
+    for index,row in df_avail.iterrows():
+        filename = '{0}*{1}.tif'.format(row['raster_id'], row['time_code'][1:-1])
+        outfilename = os.path.join(Dir, filename)
+        download_file = os.path.join(Dir, 'raw_{0}.tif'.format(row['raster_id']))
+
+        if os.path.exists(outfilename):
+            print('File %s already exits' % outfilename)
+        else:
+            print('Downloading %s' % outfilename)
+
+            ### get download url
+            download_url=WaPOR.API.getCropRasterURL(bbox,cube_code,
+                                                   row['time_code'],
+                                                   row['raster_id'],
+                                                   WaPOR.API.Token,
+                                                   print_job=False)
+
+
+            ### Download raster file
+            resp=requests.get(download_url)
+            open(download_file,'wb').write(resp.content)
+
+            ### number of days
+            timestr=row['time_code']
+            startdate=datetime.datetime.strptime(timestr[1:11],'%Y-%m-%d')
+            enddate=datetime.datetime.strptime(timestr[12:22],'%Y-%m-%d')
+            ndays=(enddate.timestamp()-startdate.timestamp())/86400
+
+            ### correct raster with multiplier and number of days in dekad
+            driver, NDV, xsize, ysize, GeoT, Projection= gis.GetGeoInfo(download_file)
+            Array = gis.OpenAsArray(download_file,nan_values=True)
+            Array=np.where(Array<0,0,Array) #mask out flagged value -9998
+            CorrectedArray=Array*multiplier*ndays
+            gis.CreateGeoTiff(outfilename,CorrectedArray,
+                              driver, NDV, xsize, ysize, GeoT, Projection)
+            os.remove(download_file)
 
         if Waitbar == 1:                 
             amount += 1
@@ -102,4 +114,4 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
                                         prefix = 'Progress:', 
                                         suffix = 'Complete', 
                                         length = 50)
-    
+    return Dir

@@ -36,6 +36,11 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
     else:
         print('Invalid Level')
 
+    # Dir=os.path.join(Dir,'WAPOR.v%s_mm-dekad-1_%s' %(version,cube_code))
+    Dir = os.path.join(Dir, cube_code)
+    if not os.path.exists(Dir):
+        os.makedirs(Dir)
+
     try:
         cube_info=WaPOR.API.getCubeInfo(cube_code)
         multiplier=cube_info['measure']['multiplier']
@@ -45,6 +50,7 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
     time_range='{0},{1}'.format(Startdate,Enddate)
     try:
         df_avail=WaPOR.API.getAvailData(cube_code,time_range=time_range)
+        df_avail.to_excel(os.path.join(Dir, 'df_avail_' + cube_code + '.xlsx'))
     except:
         print('ERROR: cannot get list of available data')
         return None
@@ -54,20 +60,18 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
         amount = 0
         WaitbarConsole.printWaitBar(amount, total_amount, prefix = 'Progress:', suffix = ' ', length = 50)
 
-    Dir=os.path.join(Dir,'WAPOR.v%s_mm-dekad-1_%s' %(version,cube_code))
-    if not os.path.exists(Dir):
-        os.makedirs(Dir)
+
 
     for index,row in df_avail.iterrows():
 
-        filename = '{0}.tif'.format(row['raster_id'])
+        filename = '{0}*{1}.tif'.format(row['raster_id'], row['time_code'][1:-1])
         outfilename = os.path.join(Dir,filename)
         download_file=os.path.join(Dir,'raw_{0}.tif'.format(row['raster_id']))
 
         if os.path.exists(outfilename):
-            file_log = ('File %s already exits' % outfilename)
+            print('File %s already exits' % outfilename)
         else:
-            file_log = ('Downloading %s' % outfilename)
+            print('Downloading %s' % outfilename)
 
             ### get download url
             download_url = WaPOR.API.getCropRasterURL(bbox, cube_code,
@@ -98,5 +102,6 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
             amount += 1
             WaitbarConsole.printWaitBar(amount, total_amount,
                                         prefix = 'Progress:',
-                                        suffix = file_log,
+                                        suffix = ' ',
                                         length = 50)
+    return Dir
