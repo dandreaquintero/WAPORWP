@@ -9,8 +9,8 @@ from useful_functions import get_subdirs
 def download_data():
     cubes_list = ['L1_PCP_D', 'L1_AETI_D', 'L1_NPP_D']  # Precipitation, Actual evapotranspiration, Net primary production
     regions_path = '../regions/'
-    stdate = '2018-01-01'
-    endate = '2018-06-30'
+    stdate = '2017-01-01'
+    endate = '2018-12-31'
 
     for region, region_path in get_subdirs(regions_path):
         print('Starting with region ', region)

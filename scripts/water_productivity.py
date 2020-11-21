@@ -1,9 +1,6 @@
 import sys
 sys.path.append("../Modules/")  # add Module to the path env variable, so we can import GIS_functions from there.
 import os
-import glob
-import matplotlib.pyplot as plt
-import numpy as np
 from GIS_functions import GIS_function as gis
 
 from useful_functions import get_subdirs
@@ -30,7 +27,7 @@ def calculate_waterproductivity():
             driver, NDV, xsize, ysize, GeoT, Projection = gis.GetGeoInfo(tif_file_path)
 
             npp_array = gis.OpenAsArray(tif_file_path, nan_values=True)
-            biomass_array = AOT * FC * (npp_array * 22.222 / (1 - MC))  # /1000 to covert from kg to ton [kg/ha]
+            biomass_array = AOT * FC * (npp_array * 22.222 / (1 - MC))/1000  # /1000 to covert from kg to ton [kg/ha]
 
             # save into output folder
             biomass_file= tif_file.replace('NPP', 'biomass')
@@ -62,11 +59,10 @@ def calculate_waterproductivity():
             AETI_array = gis.OpenAsArray(aeti_tif, nan_values=True)
             biomass_array = gis.OpenAsArray(biomass_tif, nan_values=True)
             # save into output folder
-            WP_array = biomass_array / AETI_array  # [kg/m3]
+            WP_array = biomass_array / AETI_array * 100  # [kg/m3]
             wp_file_path = biomass_tif.replace('biomass', 'WP')
             # collecting Geoinfo such as projection, the x and y axis
             driver, NDV, xsize, ysize, GeoT, Projection = gis.GetGeoInfo(biomass_tif)
             gis.CreateGeoTiff(wp_file_path, WP_array, driver, NDV, xsize, ysize, GeoT, Projection)
-
 
 calculate_waterproductivity()
