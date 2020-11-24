@@ -39,6 +39,7 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
     try:
         cube_info=WaPOR.API.getCubeInfo(cube_code)
         multiplier=cube_info['measure']['multiplier']
+        print(multiplier)
     except:
         print('ERROR: Cannot get cube info. Check if WaPOR version has cube %s'%(cube_code))
         return None
@@ -88,7 +89,7 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
             ### correct raster with multiplier and number of days in dekad
             driver, NDV, xsize, ysize, GeoT, Projection= gis.GetGeoInfo(download_file)
             Array = gis.OpenAsArray(download_file,nan_values=True)
-            Array=np.where(Array<0,0,Array) #mask out flagged value -9998
+            Array=np.where(Array>254,np.nan,Array) #mask out flagged value -9998
             CorrectedArray=Array*multiplier*ndays
             gis.CreateGeoTiff(outfilename,CorrectedArray,
                               driver, NDV, xsize, ysize, GeoT, Projection)

@@ -29,19 +29,19 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
 
     # Download data
     WaPOR.API.version=version
-    catalog=WaPOR.API.catalog
+    #catalog=WaPOR.API.catalog
     bbox=[lonlim[0],latlim[0],lonlim[1],latlim[1]]
     
     if level==1:
         cube_code='L1_NPP_D'
-    elif level==2:
-        cube_code='L2_NPP_D'
-    elif level==3:
-        print('Level 3 data only available in some areas with specific data cube code below: ')        
-        for i,row in catalog.iterrows():            
-            if ('L3_NPP' in row['code'])&('_D' in row['code']):
-                print('%s: %s'%(row['caption'],row['code']))
-        cube_code=input('Insert Level 3 cube code for the selected area: ')
+    # elif level==2:
+    #     cube_code='L2_NPP_D'
+    # elif level==3:
+    #     print('Level 3 data only available in some areas with specific data cube code below: ')
+    #     for i,row in catalog.iterrows():
+    #         if ('L3_NPP' in row['code'])&('_D' in row['code']):
+    #             print('%s: %s'%(row['caption'],row['code']))
+    #     cube_code=input('Insert Level 3 cube code for the selected area: ')
     else:
         print('Invalid Level')
 
@@ -77,9 +77,10 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
         download_file = os.path.join(Dir, 'raw_{0}.tif'.format(row['raster_id']))
 
         if os.path.exists(outfilename):
-            print('File %s already exits' % outfilename)
+            pass
+            #print('File %s already exits' % outfilename)
         else:
-            print('Downloading %s' % outfilename)
+            #print('Downloading %s' % outfilename)
 
             ### get download url
             download_url=WaPOR.API.getCropRasterURL(bbox,cube_code,

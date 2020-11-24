@@ -44,6 +44,7 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
     try:
         cube_info=WaPOR.API.getCubeInfo(cube_code)
         multiplier=cube_info['measure']['multiplier']
+        print(multiplier)
     except:
         print('ERROR: Cannot get cube info. Check if WaPOR version has cube %s'%(cube_code))
         return None
@@ -69,9 +70,10 @@ def main(Dir, Startdate='2009-01-01', Enddate='2018-12-31',
         download_file=os.path.join(Dir,'raw_{0}.tif'.format(row['raster_id']))
 
         if os.path.exists(outfilename):
-            print('File %s already exits' % outfilename)
+            pass
+            #print('File %s already exits' % outfilename)
         else:
-            print('Downloading %s' % outfilename)
+            #print('Downloading %s' % outfilename)
 
             ### get download url
             download_url = WaPOR.API.getCropRasterURL(bbox, cube_code,
